@@ -2,6 +2,8 @@
 import Swal from 'sweetalert2';
 import { reactive, onMounted } from 'vue';
 import TodoCard from './components/TodoCards.vue'
+import { deleteIcon } from './assets';
+import { plusIcon } from './assets';
 // Define interfaces for Todo and AppState
 interface Todo {
   title: string;
@@ -22,13 +24,25 @@ const state = reactive<AppState>({
 });
 
 // Function to add a new todo
+// Function to add a new todo
 function addTodo() {
   if (state.newTodo.trim()) {
-    state.todos.push({ title: state.newTodo, done: false });
-    state.newTodo = '';
-    saveToLocalStorage(); // Save to localStorage after adding todo
+    const duplicate = state.todos.find(todo => todo.title === state.newTodo.trim());
+    if (duplicate) {
+      Swal.fire({
+        title: "Duplicate Todo",
+        text: "This todo already exists!",
+        icon: "warning",
+        confirmButtonText: "OK"
+      });
+    } else {
+      state.todos.push({ title: state.newTodo, done: false });
+      state.newTodo = '';
+      saveToLocalStorage(); // Save to localStorage after adding todo
+    }
   }
 }
+
 
 // Function to mark a todo as done
 function markDone(index: number) {
@@ -119,9 +133,9 @@ onMounted(() => {
           <div class="md:flex md:items-center">
             <div class="md:w-2/3">
               <button class="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded" type="submit">
-                <img src="./assets/plus.png" alt=""> Add
+                <img :src="plusIcon" alt=""> Add
               </button>
-              <button class="ml-2 shadow bg-red-500 hover:bg-red-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded" @click="deleteAll"><img class="ml-3" src="./assets/delete.png" alt=""> Delete All</button>
+              <button class="ml-2 shadow bg-red-500 hover:bg-red-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded" @click="deleteAll"><img class="ml-3" :src="deleteIcon" alt=""> Delete All</button>
             </div>
           </div>
         </form>
@@ -129,15 +143,21 @@ onMounted(() => {
 
       <!-- ToDo Cards -->
       <section class="row flex flex-wrap gap-4 p-4">
-        <TodoCard
-          v-for="(todo, index) in state.todos"
-          :key="index"
-          :activity="todo.title"
-          :done="todo.done"
-          @done="markDone(index)"
-          @delete="deleteTodo(index)"
-        />
-      </section>
+  <template v-if="state.todos.length > 0">
+    <TodoCard
+      v-for="(todo, index) in state.todos"
+      :key="index"
+      :activity="todo.title"
+      :done="todo.done"
+      @done="markDone(index)"
+      @delete="deleteTodo(index)"
+    />
+  </template>
+  <template v-else>
+    <h2 class="text-2xl font-bold mt-2 text-center text-red-500">List is empty</h2>
+  </template>
+</section>
+
     </div>
   </main>
 </template>
